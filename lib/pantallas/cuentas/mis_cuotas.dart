@@ -9,7 +9,8 @@ import '../../widgets/comunes.dart';
 /// «Mis cuotas» del padre (R-CU08, RN-CU07): lo que debe su hijo, con el estado de cada pago.
 /// Sólo ve sus propias cuotas (RN-CU03, RN-CU04).
 class MisCuotas extends StatelessWidget {
-  const MisCuotas({super.key});
+  const MisCuotas({super.key, this.enPestana = true});
+  final bool enPestana; // false cuando se abre desde el panel del tesorero (con botón de volver)
 
   CursoMio get _c => sesion.curso!;
 
@@ -29,7 +30,7 @@ class MisCuotas extends StatelessWidget {
         final anuladas = cuotas.where((q) => q['anulada'] == true).toList();
         return Pantalla(
           titulo: 'Cuentas',
-          atras: false,
+          atras: !enPestana,
           children: [
             Titulo(_c.hijo == null ? 'Mis cuotas' : 'Cuotas de ${_c.hijoNombre}',
                 sub: 'Solo tú y el tesorero ven tu estado de pago.'),
@@ -45,7 +46,7 @@ class MisCuotas extends StatelessWidget {
                 const Icon(Icons.chevron_right, color: C.lilaStrong),
               ]),
             ),
-            if (_c.esTesorero)
+            if (_c.esTesorero && enPestana)
               Tarjeta(
                 color: C.lila,
                 onTap: () async {

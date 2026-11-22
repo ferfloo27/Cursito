@@ -63,6 +63,7 @@ final rutas = GoRouter(
     GoRoute(path: '/cuotas/pagar', builder: (_, s) => PagarCuota(cuota: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/cuotas/resultado', builder: (_, s) => ResultadoPago(datos: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/tesorero', builder: (_, _) => const PanelTesorero(enPestana: false)),
+    GoRoute(path: '/mis-cuotas', builder: (_, _) => const MisCuotas(enPestana: false)),
     GoRoute(path: '/pagos/revisar', builder: (_, s) => RevisarPago(pago: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/cuentas/curso', builder: (_, _) => const CuentasCurso(enPestana: false)),
     GoRoute(path: '/calendario', builder: (_, _) => const CalendarioCurso(enPestana: false)),
@@ -102,12 +103,13 @@ final rutas = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
               path: '/cuentas',
-              builder: (_, _) => sesion.curso?.esAsesor == true
-                  ? const CuentasCurso()
-                  : sesion.curso?.esPadre == true
-                      ? const MisCuotas()
-                      : sesion.curso?.esTesorero == true
-                          ? const PanelTesorero()
+              // El tesorero entra directo a su panel (comprobantes, quién debe, QR); desde ahí llega a sus cuotas y a las cuentas.
+              builder: (_, _) => sesion.curso?.esTesorero == true
+                  ? const PanelTesorero()
+                  : sesion.curso?.esAsesor == true
+                      ? const CuentasCurso()
+                      : sesion.curso?.esPadre == true
+                          ? const MisCuotas()
                           : const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
         ]),
         StatefulShellBranch(routes: [GoRoute(path: '/mas', builder: (_, _) => const Mas())]),

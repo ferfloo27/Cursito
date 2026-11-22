@@ -139,6 +139,13 @@ class _PagarCuotaState extends State<PagarCuota> {
             icon: const Icon(Icons.photo_camera_outlined, size: 18),
             label: Text(_foto == null ? 'Elegir foto' : 'Cambiar foto'),
           ),
+          if (_foto != null)
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: C.rosaInk),
+              onPressed: _enviando ? null : () => setState(() => _foto = null),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Quitar foto'),
+            ),
           Text('Se comprime para que pese menos de 500 KB.', style: T.caption),
           const Seccion('3 · Copia los datos del comprobante'),
           Campo(

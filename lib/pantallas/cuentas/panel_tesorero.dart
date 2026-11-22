@@ -87,6 +87,17 @@ class _PanelTesoreroState extends State<PanelTesorero> {
     }
   }
 
+  /// Quita el QR de cobro: las familias vuelven a ver que el tesorero todavía no subió su QR.
+  Future<void> _quitarQr(VoidCallback recargar) async {
+    if (!await confirmar(context, 'Quitar el QR', 'Las familias no verán tu QR hasta que subas otro.', si: 'Quitar QR')) return;
+    if (!mounted) return;
+    if (await intentar(context, () => supa.rpc('quitar_qr_cobro', params: {'p_curso': _c.id}))) {
+      if (!mounted) return;
+      avisar(context, 'QR quitado.');
+      recargar();
+    }
+  }
+
   /// Recordatorio privado a quien debe (R-CU39): un aviso por cuota, sólo para esas familias.
   Future<void> _recordar(List<Map<String, dynamic>> quienDebe) async {
     final cuotas = {for (final r in quienDebe) r['cuota_id'] as String};
@@ -120,7 +131,28 @@ class _PanelTesoreroState extends State<PanelTesorero> {
         titulo: 'Cuentas',
         atras: !widget.enPestana,
         children: [
-          const Titulo('Panel del tesorero', sub: 'Tu QR de cobro y las cuotas del curso.'),
+          const Titulo('Panel del tesorero', sub: 'Comprobantes, quién debe, tu QR de cobro y las cuotas del curso.'),
+          Tarjeta(
+            color: C.lila,
+            onTap: () => context.push('/cuentas/curso'),
+            child: Row(children: [
+              const Icon(Icons.receipt_long_outlined, color: C.lilaStrong),
+              const SizedBox(width: 12),
+              Expanded(child: Text('Cuentas del curso', style: T.heading)),
+              const Icon(Icons.chevron_right, color: C.lilaStrong),
+            ]),
+          ),
+          if (_c.esPadre)
+            Tarjeta(
+              color: C.lila,
+              onTap: () => context.push('/mis-cuotas'),
+              child: Row(children: [
+                const Icon(Icons.payments_outlined, color: C.lilaStrong),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Mis cuotas como padre', style: T.heading)),
+                const Icon(Icons.chevron_right, color: C.lilaStrong),
+              ]),
+            ),
           const Seccion('Tu QR de cobro'),
           Tarjeta(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -135,6 +167,13 @@ class _PanelTesoreroState extends State<PanelTesorero> {
               const SizedBox(height: 12),
               BotonPrincipal(d.qrUrl == null ? 'Subir QR' : 'Cambiar QR',
                   icono: Icons.qr_code_2, cargando: _subiendo, onPressed: () => _subirQr(recargar)),
+              if (d.qrUrl != null)
+                TextButton.icon(
+                  style: TextButton.styleFrom(foregroundColor: C.rosaInk),
+                  onPressed: _subiendo ? null : () => _quitarQr(recargar),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Quitar QR'),
+                ),
             ]),
           ),
           Seccion('Por confirmar (${d.porConfirmar.length})'),

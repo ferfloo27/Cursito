@@ -144,6 +144,13 @@ class _RegistrarGastoState extends State<RegistrarGasto> {
             icon: const Icon(Icons.photo_camera_outlined, size: 18),
             label: Text(_factura == null ? 'Elegir foto' : 'Cambiar foto'),
           ),
+          if (_factura != null)
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: C.rosaInk),
+              onPressed: _enviando ? null : () => setState(() => _factura = null),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Quitar foto'),
+            ),
           if (_error != null) AvisoCaja(_error!),
         ],
       ),
