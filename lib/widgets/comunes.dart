@@ -214,15 +214,85 @@ class Cargador<D> extends StatefulWidget {
 
 class _CargadorState<D> extends State<Cargador<D>> {
   late Future<D> _f = widget.cargar();
+  D? _ultimo; // lo último que se mostró: al recargar se conserva en pantalla en vez de borrarla
+  bool _tiene = false;
   void _recargar() => setState(() => _f = widget.cargar());
+
   @override
   Widget build(BuildContext context) => FutureBuilder<D>(
         future: _f,
         builder: (context, s) {
-          if (s.connectionState != ConnectionState.done) return const Cargando();
-          if (s.hasError) return ErrorConReintento(s.error!, reintentar: _recargar);
+          if (s.connectionState == ConnectionState.done && !s.hasError) {
+            _ultimo = s.data as D;
+            _tiene = true;
+          }
+          if (s.connectionState != ConnectionState.done) {
+            // Primera carga: esqueleto. Recarga (cambiar de mes, de filtro…): se mantiene lo anterior con una barra arriba.
+            if (!_tiene) return const Esqueleto();
+            return Stack(children: [
+              widget.construir(context, _ultimo as D, _recargar),
+              const Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(minHeight: 3)),
+            ]);
+          }
+          if (s.hasError) {
+            return Material(
+              color: C.surface,
+              child: SafeArea(child: Padding(padding: const EdgeInsets.all(16), child: ErrorConReintento(s.error!, reintentar: _recargar))),
+            );
+          }
           return widget.construir(context, s.data as D, _recargar);
         },
+      );
+}
+
+/// Pantalla de carga con barras grises que laten, en lugar de una pantalla vacía.
+class Esqueleto extends StatefulWidget {
+  const Esqueleto({super.key});
+  @override
+  State<Esqueleto> createState() => _EsqueletoState();
+}
+
+class _EsqueletoState extends State<Esqueleto> with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
+    ..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _a.dispose();
+    super.dispose();
+  }
+
+  Widget _barra(double ancho, double alto) => Container(
+        width: ancho,
+        height: alto,
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(color: C.line, borderRadius: BorderRadius.circular(R.sm)),
+      );
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: C.surface,
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: Tween(begin: 0.45, end: 1.0).animate(_a),
+            child: ListView(
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                const SizedBox(height: 12),
+                _barra(180, 28),
+                _barra(260, 14),
+                const SizedBox(height: 16),
+                for (var i = 0; i < 4; i++)
+                  Container(
+                    height: 76,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(color: C.line, borderRadius: BorderRadius.circular(R.md)),
+                  ),
+              ],
+            ),
+          ),
+        ),
       );
 }
 
