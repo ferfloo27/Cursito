@@ -250,6 +250,9 @@ class Mas extends StatelessWidget {
             Text(etiquetaRol(c), style: T.caption),
             const SizedBox(height: 16),
             if (c.esPadre) item(Icons.child_care, 'Mis hijos', '/mis-hijos', sub: 'Vincular con QR o quitar el acceso'),
+            if (c.esPadre && c.hijoId != null)
+              item(Icons.description_outlined, 'Mi informe', '/mi-informe', sub: 'La libreta de ${c.hijoNombre}'),
+            if (c.esDocente) item(Icons.description_outlined, 'Informes', '/informes', sub: 'Redactar la libreta de cada alumno'),
             if (c.gestiona) ...[
               item(Icons.groups_outlined, 'Nómina del curso', '/nomina', sub: 'Cargar, corregir y quitar alumnos'),
               item(Icons.manage_accounts_outlined, 'Miembros y roles', '/miembros', sub: 'Tesorero, docentes y códigos'),
