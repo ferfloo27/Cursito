@@ -111,6 +111,7 @@ class InicioCurso extends StatelessWidget {
                       if (d.actividades.isEmpty) const Vacio('No hay actividades próximas.', icono: Icons.event_available_outlined),
                       for (final a in d.actividades)
                         Tarjeta(
+                          onTap: () => context.push('/actividad/${a['id']}'),
                           color: a['tipo'] == 'evento' ? C.durazno : C.cielo,
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Chip2(a['tipo'] == 'evento' ? 'Evento' : 'Tarea · ${(a['materia'] as Map?)?['nombre'] ?? ''}',
@@ -197,6 +198,7 @@ class InicioAlumno extends StatelessWidget {
             for (final a in d.$2)
               Tarjeta(
                 color: C.cielo,
+                onTap: () => context.push('/a/actividad/${a['id']}'),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(a['tipo'] == 'evento' ? 'EVENTO' : '${(a['materia'] as Map?)?['nombre'] ?? ''}'.toUpperCase(),
                       style: T.label.copyWith(color: C.cieloInk)),

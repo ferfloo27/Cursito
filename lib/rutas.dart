@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import 'estado/sesion.dart';
 import 'pantallas/acceso/acceso.dart';
+import 'pantallas/actividades/actividades.dart';
+import 'pantallas/actividades/detalle.dart';
 import 'pantallas/curso/crear_curso.dart';
 import 'pantallas/curso/miembros.dart';
 import 'pantallas/curso/nomina.dart';
@@ -41,6 +43,12 @@ final rutas = GoRouter(
     GoRoute(path: '/unirme/padre', builder: (_, _) => const UnirmePadre()),
     GoRoute(path: '/unirme/profesor', builder: (_, _) => const UnirmeProfesor()),
     GoRoute(path: '/mis-hijos', builder: (_, _) => const MisHijos()),
+    GoRoute(path: '/actividades/nueva', builder: (_, _) => const NuevaActividad()),
+    GoRoute(path: '/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
+    GoRoute(
+        path: '/actividad/:id/editar',
+        builder: (_, s) => NuevaActividad(editar: s.extra as Map<String, dynamic>?)),
+    GoRoute(path: '/a/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
     GoRoute(path: '/alumno/escanear', builder: (_, _) => const AlumnoEscanear()),
     GoRoute(path: '/alumno/pin', builder: (_, _) => const AlumnoPin()),
     StatefulShellRoute.indexedStack(
@@ -48,7 +56,7 @@ final rutas = GoRouter(
       branches: [
         StatefulShellBranch(routes: [GoRoute(path: '/inicio', builder: (_, _) => const InicioCurso())]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/actividades', builder: (_, _) => const Proximamente('Actividades', Icons.event_note_outlined))
+          GoRoute(path: '/actividades', builder: (_, _) => const ListaActividades())
         ]),
         StatefulShellBranch(
             routes: [GoRoute(path: '/muro', builder: (_, _) => const Proximamente('Muro', Icons.forum_outlined))]),
@@ -63,7 +71,7 @@ final rutas = GoRouter(
       branches: [
         StatefulShellBranch(routes: [GoRoute(path: '/a/inicio', builder: (_, _) => const InicioAlumno())]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/a/tareas', builder: (_, _) => const Proximamente('Tareas', Icons.assignment_outlined))
+          GoRoute(path: '/a/tareas', builder: (_, _) => const ListaActividades())
         ]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/a/calendario', builder: (_, _) => const Proximamente('Calendario', Icons.calendar_month_outlined))
