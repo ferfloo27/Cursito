@@ -176,7 +176,7 @@ class _DetalleActividadState extends State<DetalleActividad> {
               if (d.a['pide_autorizacion'] == true && !_c.esAlumno) ..._autorizacion(d, abierta),
               if (d.cuota != null)
                 ..._cuota(d)
-              else if (evento && _c.esTesorero && !cancelada)
+              else if (evento && (_c.esTesorero || _c.esAsesor) && !cancelada)
                 ..._sinCuota(a),
               HiloActividad(actividad: a),
             ]);
@@ -225,7 +225,7 @@ class _DetalleActividadState extends State<DetalleActividad> {
           Text('${d.autorizaron ?? 0} de ${d.familias} familias autorizaron.', style: T.body),
       ];
 
-  /// Evento sin cuota: el tesorero la crea ya ligada a este evento (RN-CU16, Q-CU-ACT-08).
+  /// Evento sin cuota: el tesorero o el asesor la crean ya ligada a este evento (RN-CU16, decisión del 22 nov).
   List<Widget> _sinCuota(Map<String, dynamic> a) => [
         const Seccion('Cuota del evento'),
         const AvisoCaja('Este evento todavía no tiene cuota. Al crearla, cada familia ve cuánto paga y hasta cuándo.',
@@ -266,7 +266,7 @@ class _DetalleActividadState extends State<DetalleActividad> {
             Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(q['concepto'] as String, style: T.heading),
-              Text('Vence el ${fechaCorta(DateTime.parse(q['vence_el'] as String))} · creada por el tesorero',
+              Text('Vence el ${fechaCorta(DateTime.parse(q['vence_el'] as String))}',
                   style: T.caption.copyWith(color: C.mentaInk)),
             ])),
             Text(bs(q['monto_por_alumno']), style: T.amount.copyWith(color: C.mentaInk)),

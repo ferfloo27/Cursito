@@ -68,6 +68,17 @@ class CuentasCurso extends StatelessWidget {
                 _fila('Familias que pagaron', '${r['familias_pagaron']} de ${r['familias']}'),
               ]),
             ),
+            if (_c.esAsesor && !_c.esTesorero) ...[
+              const SizedBox(height: 4),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                onPressed: () async {
+                  if (await context.push<bool>('/cuotas/nueva') == true) recargar();
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Crear cuota'),
+              ),
+            ],
             if (_c.esTesorero) ...[
               const SizedBox(height: 4),
               Row(children: [

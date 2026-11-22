@@ -41,7 +41,8 @@ class _ListaActividadesState extends State<ListaActividades> {
     return (List<Map<String, dynamic>>.from(f), conCuota);
   }
 
-  bool _puedePublicar(CursoMio c) => c.esDocente;
+  /// Docentes (tareas y, el asesor, eventos) y el tesorero (eventos): RN-CU20 con la decisión del 22 nov.
+  bool _puedePublicar(CursoMio c) => c.esDocente || c.esTesorero;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +130,7 @@ class NuevaActividad extends StatefulWidget {
 
 class _NuevaActividadState extends State<NuevaActividad> {
   final _form = GlobalKey<FormState>();
-  late String _tipo = widget.editar?['tipo'] as String? ?? (sesion.curso!.esAsesor ? 'evento' : 'tarea');
+  late String _tipo = widget.editar?['tipo'] as String? ?? ((sesion.curso!.esAsesor || !sesion.curso!.esDocente) ? 'evento' : 'tarea');
   String? _materia;
   final _titulo = TextEditingController(), _lugar = TextEditingController(), _descripcion = TextEditingController();
   DateTime? _fecha;
@@ -173,8 +174,10 @@ class _NuevaActividadState extends State<NuevaActividad> {
 
   Future<void> _elegirFecha() async {
     final hoy = DateTime.now();
-    final d = await showDatePicker(
-        context: context, initialDate: _fecha ?? hoy, firstDate: DateTime(hoy.year - 1), lastDate: DateTime(hoy.year + 2));
+    // Una actividad nueva no puede quedar en el pasado; al editar se deja corregir (decisión del 22 nov).
+    final primera = _editando ? DateTime(hoy.year - 1) : DateTime(hoy.year, hoy.month, hoy.day);
+    final inicial = _fecha != null && !_fecha!.isBefore(primera) ? _fecha! : primera.isAfter(hoy) ? primera : hoy;
+    final d = await showDatePicker(context: context, initialDate: inicial, firstDate: primera, lastDate: DateTime(hoy.year + 2));
     if (d != null) setState(() => _fecha = d);
   }
 
@@ -187,7 +190,11 @@ class _NuevaActividadState extends State<NuevaActividad> {
     if (!_form.currentState!.validate()) return;
     if (_fecha == null) return setState(() => _error = 'Elige la fecha.');
     if (_tipo == 'tarea' && _materia == null && !_editando) return setState(() => _error = 'Elige la materia.');
-    final fecha = DateTime(_fecha!.year, _fecha!.month, _fecha!.day, _hora.hour, _hora.minute).toUtc().toIso8601String();
+    final cuando = DateTime(_fecha!.year, _fecha!.month, _fecha!.day, _hora.hour, _hora.minute);
+    if (!_editando && cuando.isBefore(DateTime.now())) {
+      return setState(() => _error = 'La fecha y la hora ya pasaron. Elige un momento que todavía no llegó.');
+    }
+    final fecha = cuando.toUtc().toIso8601String();
     setState(() {
       _enviando = true;
       _error = null;
@@ -233,15 +240,16 @@ class _NuevaActividadState extends State<NuevaActividad> {
             const Etiqueta('Tipo'),
             SegmentedButton<String>(
               segments: [
-                const ButtonSegment(value: 'tarea', label: Text('Tarea')),
-                ButtonSegment(value: 'evento', label: const Text('Evento'), enabled: _c.esAsesor),
+                ButtonSegment(value: 'tarea', label: const Text('Tarea'), enabled: _c.esDocente),
+                ButtonSegment(value: 'evento', label: const Text('Evento'), enabled: _c.esAsesor || _c.esTesorero),
               ],
               selected: {_tipo},
               onSelectionChanged: (s) => setState(() => _tipo = s.first),
             ),
-            if (!_c.esAsesor)
+            if (!(_c.esAsesor || _c.esTesorero))
               Padding(
-                  padding: const EdgeInsets.only(top: 6), child: Text('Los eventos del curso los crea solo el asesor.', style: T.caption)),
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text('Los eventos del curso los crean el asesor y el tesorero.', style: T.caption)),
             if (!evento) ...[
               const Etiqueta('Materia'),
               FutureBuilder<List<Map<String, dynamic>>>(
@@ -305,7 +313,7 @@ class _NuevaActividadState extends State<NuevaActividad> {
               value: _autorizacion,
               onChanged: (v) => setState(() => _autorizacion = v),
             ),
-            const AvisoCaja('¿Lleva cuota? La crea el tesorero en «Crear cuota» y la liga a este evento después de publicarlo.',
+            const AvisoCaja('¿Lleva cuota? La crea el tesorero o el asesor en «Crear cuota» y la liga a este evento después de publicarlo.',
                 fondo: C.menta, tinta: C.mentaInk, icono: Icons.payments_outlined),
           ],
           if (_error != null) AvisoCaja(_error!),
