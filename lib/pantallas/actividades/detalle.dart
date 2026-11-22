@@ -19,6 +19,7 @@ class _Detalle {
   Map<String, dynamic>? cuota;
   Map<String, dynamic>? miDeuda;
   Map<String, dynamic>? rendicion;
+  List<Map<String, dynamic>> deben = []; // «quién debe» de esta cuota: sólo el tesorero (RN-CU03)
 }
 
 /// 16 · Detalle de actividad: asistencia, autorización y cuota juntas (R-CU25, R-CU37, R-CU38, R-CU47).
@@ -68,6 +69,13 @@ class _DetalleActividadState extends State<DetalleActividad> {
       if (_c.veCuentas) {
         d.rendicion = Map<String, dynamic>.from(
             await supa.rpc('rendicion', params: {'p_curso': _c.id, 'p_actividad': widget.id}) as Map);
+      }
+      if (_c.esTesorero) {
+        final f = await supa.rpc('quien_debe', params: {'p_curso': _c.id}) as List;
+        d.deben = [
+          for (final e in f)
+            if ((e as Map)['cuota_id'] == d.cuota!['id']) Map<String, dynamic>.from(e),
+        ];
       }
       if (_c.esPadre) {
         final mias = await supa.rpc('mis_cuotas', params: {'p_curso': _c.id}) as List;
@@ -166,7 +174,10 @@ class _DetalleActividadState extends State<DetalleActividad> {
               ],
               if (evento && d.conteo != null) ..._asistencia(d, abierta),
               if (d.a['pide_autorizacion'] == true && !_c.esAlumno) ..._autorizacion(d, abierta),
-              if (d.cuota != null) ..._cuota(d),
+              if (d.cuota != null)
+                ..._cuota(d)
+              else if (evento && _c.esTesorero && !cancelada)
+                ..._sinCuota(a),
               HiloActividad(actividad: a),
             ]);
           },
@@ -214,6 +225,22 @@ class _DetalleActividadState extends State<DetalleActividad> {
           Text('${d.autorizaron ?? 0} de ${d.familias} familias autorizaron.', style: T.body),
       ];
 
+  /// Evento sin cuota: el tesorero la crea ya ligada a este evento (RN-CU16, Q-CU-ACT-08).
+  List<Widget> _sinCuota(Map<String, dynamic> a) => [
+        const Seccion('Cuota del evento'),
+        const AvisoCaja('Este evento todavía no tiene cuota. Al crearla, cada familia ve cuánto paga y hasta cuándo.',
+            fondo: C.menta, tinta: C.mentaInk, icono: Icons.payments_outlined),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: () async {
+            final creada = await context.push<bool>('/cuotas/nueva', extra: {'actividad_id': a['id']});
+            if (creada == true) _recargar();
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Crear cuota de este evento'),
+        ),
+      ];
+
   List<Widget> _cuota(_Detalle d) {
     final q = d.cuota!;
     final r = d.rendicion;
@@ -249,6 +276,8 @@ class _DetalleActividadState extends State<DetalleActividad> {
             Text(
                 'Recaudado ${bs(r['recaudado'])}${total > 0 ? ' de ${bs(total)}' : ''} · gastado ${bs(r['gastado'])} · saldo ${bs(r['saldo'])}',
                 style: T.body.copyWith(color: C.mentaInk)),
+            const SizedBox(height: 4),
+            Text('${r['familias_pagaron']} de ${r['familias']} familias pagaron', style: T.caption.copyWith(color: C.mentaInk)),
           ],
           if (estado != null) ...[
             const SizedBox(height: 8),
@@ -257,12 +286,45 @@ class _DetalleActividadState extends State<DetalleActividad> {
           if (m != null && aNum(m['pendiente']) > 0) ...[
             const SizedBox(height: 12),
             FilledButton(
-              onPressed: () => avisar(context, 'El pago con comprobante llega en la fase de finanzas.'),
-              child: const Text('Pagar mi cuota'),
+              onPressed: () async {
+                await context.push('/cuotas/pagar', extra: m);
+                _recargar();
+              },
+              child: Text(m['ultimo_rechazo'] != null ? 'Subir otro comprobante' : 'Pagar mi cuota'),
             ),
           ],
         ]),
       ),
+      if (_c.esTesorero) ...[
+        const Seccion('Quién debe en este evento'),
+        Text('Solo tú lo ves.', style: T.caption),
+        if (d.deben.isEmpty)
+          const Vacio('Todas las familias pagaron esta cuota.', icono: Icons.check_circle_outline)
+        else
+          for (final e in d.deben)
+            Tarjeta(
+              padding: 12,
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(e['alumno'] as String, style: T.heading),
+                    Text('${e['padre'] ?? 'Sin padre vinculado'}', style: T.caption),
+                    if (aNum(e['en_revision']) > 0) Text('En revisión: ${bs(e['en_revision'])}', style: T.caption),
+                  ]),
+                ),
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text(bs(e['pendiente']), style: T.heading),
+                  const SizedBox(height: 4),
+                  if (e['vencida'] == true)
+                    const Chip2('Vencida', fondo: C.rosa, tinta: C.rosaInk)
+                  else if (e['estado'] == 'pago_parcial')
+                    const Chip2('Pago parcial', fondo: C.durazno, tinta: C.duraznoInk)
+                  else
+                    const Chip2('Pendiente', fondo: C.cielo, tinta: C.cieloInk),
+                ]),
+              ]),
+            ),
+      ],
     ];
   }
 }

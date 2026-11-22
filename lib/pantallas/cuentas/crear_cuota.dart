@@ -15,7 +15,8 @@ class _Opciones {
 
 /// Crear cuota (R-CU08, RN-CU16): concepto, monto por alumno, fecha límite y, si aplica, el evento al que se liga.
 class CrearCuota extends StatefulWidget {
-  const CrearCuota({super.key});
+  const CrearCuota({super.key, this.actividadId});
+  final String? actividadId; // viene del detalle de un evento sin cuota
   @override
   State<CrearCuota> createState() => _CrearCuotaState();
 }
@@ -24,7 +25,7 @@ class _CrearCuotaState extends State<CrearCuota> {
   final _form = GlobalKey<FormState>();
   final _concepto = TextEditingController(), _monto = TextEditingController();
   DateTime? _vence;
-  String? _actividad; // null = cuota general del curso
+  late String? _actividad = widget.actividadId; // null = cuota general del curso
   bool _enviando = false;
   String? _error;
   late final Future<_Opciones> _opciones = _cargarOpciones();

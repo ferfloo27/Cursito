@@ -56,7 +56,9 @@ final rutas = GoRouter(
     GoRoute(path: '/unirme/profesor', builder: (_, _) => const UnirmeProfesor()),
     GoRoute(path: '/mis-hijos', builder: (_, _) => const MisHijos()),
     GoRoute(path: '/actividades/nueva', builder: (_, _) => const NuevaActividad()),
-    GoRoute(path: '/cuotas/nueva', builder: (_, _) => const CrearCuota()),
+    GoRoute(
+        path: '/cuotas/nueva',
+        builder: (_, s) => CrearCuota(actividadId: (s.extra as Map?)?['actividad_id'] as String?)),
     GoRoute(path: '/cuotas/pagar', builder: (_, s) => PagarCuota(cuota: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/cuotas/resultado', builder: (_, s) => ResultadoPago(datos: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/tesorero', builder: (_, _) => const PanelTesorero(enPestana: false)),
