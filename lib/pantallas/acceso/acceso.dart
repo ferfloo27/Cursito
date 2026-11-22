@@ -212,8 +212,10 @@ class ElegirEntrada extends StatelessWidget {
               '/unirme/padre'),
           _opcion(context, Icons.co_present_outlined, C.cielo, C.cieloInk, 'Soy profesor de materia',
               'Tengo el código de invitación', '/unirme/profesor'),
-          _opcion(context, Icons.qr_code_scanner, C.durazno, C.duraznoInk, 'Soy alumno', 'Tengo el QR de mi papá o mamá',
-              '/alumno/escanear'),
+          // El alumno entra con el QR desde la bienvenida, sin cuenta de adulto; quien ya inició sesión no lo necesita.
+          if (!sesion.conSesion)
+            _opcion(context, Icons.qr_code_scanner, C.durazno, C.duraznoInk, 'Soy alumno', 'Tengo el QR de mi papá o mamá',
+                '/alumno/escanear'),
           const AvisoCaja(
               'Solo el asesor o el padre delegado pueden crear un curso. No hace falta que el colegio contrate nada.',
               fondo: C.cielo,

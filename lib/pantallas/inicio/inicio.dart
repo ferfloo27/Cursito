@@ -249,6 +249,7 @@ class Mas extends StatelessWidget {
             Text('${c.nombre} · ${c.colegio}', style: T.title),
             Text(etiquetaRol(c), style: T.caption),
             const SizedBox(height: 16),
+            item(Icons.person_outline, 'Mi perfil', '/perfil', sub: sesion.usuario?.email ?? 'Tus datos y tus cursos'),
             if (c.esPadre) item(Icons.child_care, 'Mis hijos', '/mis-hijos', sub: 'Vincular con QR o quitar el acceso'),
             if (c.esPadre && c.hijoId != null)
               item(Icons.description_outlined, 'Mi informe', '/mi-informe', sub: 'La libreta de ${c.hijoNombre}'),

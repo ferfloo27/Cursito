@@ -22,6 +22,7 @@ import 'pantallas/curso/nomina.dart';
 import 'pantallas/curso/unirme.dart';
 import 'pantallas/inicio/inicio.dart';
 import 'pantallas/inicio/marco.dart';
+import 'pantallas/inicio/perfil.dart';
 import 'pantallas/vinculacion/alumno.dart';
 import 'pantallas/vinculacion/mis_hijos.dart';
 
@@ -63,6 +64,7 @@ final rutas = GoRouter(
     GoRoute(path: '/cuentas/curso', builder: (_, _) => const CuentasCurso(enPestana: false)),
     GoRoute(path: '/calendario', builder: (_, _) => const CalendarioCurso(enPestana: false)),
     GoRoute(path: '/horario', builder: (_, _) => const HorarioCurso(enPestana: false)),
+    GoRoute(path: '/perfil', builder: (_, _) => const PerfilUsuario()),
     GoRoute(path: '/informes', builder: (_, _) => const ListaInformes()),
     GoRoute(path: '/informes/redactar', builder: (_, s) => RedactarInforme(datos: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/mi-informe', builder: (_, _) => const MiInforme()),

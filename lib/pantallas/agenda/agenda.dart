@@ -141,10 +141,6 @@ class HorarioCurso extends StatelessWidget {
     return Cargador<({List<Map<String, dynamic>> bloques, List<Map<String, dynamic>> profesores})>(
       cargar: _cargar,
       construir: (context, d, _) {
-        final porDia = <int, List<Map<String, dynamic>>>{};
-        for (final b in d.bloques) {
-          porDia.putIfAbsent(b['dia'] as int, () => []).add(b);
-        }
         final profes = [...d.profesores]..sort((a, b) => _nombre(a).compareTo(_nombre(b)));
         return Pantalla(
           titulo: 'Horario',
@@ -152,22 +148,9 @@ class HorarioCurso extends StatelessWidget {
           children: [
             Titulo('Horario de ${_c.nombre}', sub: 'Materias por día y hora.'),
             if (d.bloques.isEmpty)
-              const Vacio('Todavía no se cargó el horario.', icono: Icons.schedule_outlined),
-            for (final dia in _diasSemana.keys)
-              if (porDia.containsKey(dia)) ...[
-                Seccion(_diasSemana[dia]!),
-                for (final b in porDia[dia]!)
-                  Tarjeta(
-                    padding: 12,
-                    child: Row(children: [
-                      SizedBox(
-                        width: 110,
-                        child: Text('${_hora(b['hora_inicio'])} – ${_hora(b['hora_fin'])}', style: T.caption),
-                      ),
-                      Expanded(child: Text((b['materia'] as Map?)?['nombre'] as String? ?? '', style: T.heading)),
-                    ]),
-                  ),
-              ],
+              const Vacio('Todavía no se cargó el horario.', icono: Icons.schedule_outlined)
+            else
+              _cuadricula(d.bloques),
             // El alumno no puede leer la lista de miembros (RLS): en su caso esta sección queda vacía.
             if (profes.isNotEmpty) const Seccion('Profesores'),
             for (final p in profes)
@@ -192,6 +175,80 @@ class HorarioCurso extends StatelessWidget {
       },
     );
   }
+
+  static const _colores = [
+    (C.lila, C.ink),
+    (C.cielo, C.cieloInk),
+    (C.menta, C.mentaInk),
+    (C.durazno, C.duraznoInk),
+    (C.rosa, C.rosaInk),
+  ];
+
+  /// Cuadrícula semanal: una fila por franja horaria y una columna por día (lunes a viernes).
+  /// Cada materia conserva su color en toda la semana.
+  Widget _cuadricula(List<Map<String, dynamic>> bloques) {
+    final franjas = <String>{for (final b in bloques) '${_hora(b['hora_inicio'])}|${_hora(b['hora_fin'])}'}.toList()
+      ..sort();
+    final materias = <String>{for (final b in bloques) _materia(b)}.toList()..sort();
+    final celdas = <String, String>{
+      for (final b in bloques) '${b['dia']}|${_hora(b['hora_inicio'])}|${_hora(b['hora_fin'])}': _materia(b),
+    };
+
+    Widget encabezado(String t) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(t, style: T.label, textAlign: TextAlign.center),
+        );
+
+    Widget celda(String? materia) {
+      if (materia == null) return const SizedBox(height: 56);
+      final (fondo, tinta) = _colores[materias.indexOf(materia) % _colores.length];
+      return Container(
+        height: 56,
+        margin: const EdgeInsets.all(2),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(R.sm)),
+        child: Text(
+          materia,
+          style: T.caption.copyWith(color: tinta, fontWeight: FontWeight.w600, fontSize: 11),
+          textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        const anchoHora = 52.0;
+        final anchoDia = ((c.maxWidth - anchoHora) / 5).clamp(64.0, 200.0);
+        final tabla = Table(
+          columnWidths: {
+            0: const FixedColumnWidth(anchoHora),
+            for (var i = 1; i <= 5; i++) i: FixedColumnWidth(anchoDia),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            TableRow(children: [
+              const SizedBox.shrink(),
+              for (final dia in _diasSemana.values) encabezado(dia.substring(0, 3)),
+            ]),
+            for (final f in franjas)
+              TableRow(children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Text(f.replaceFirst('|', '\n'), style: T.caption.copyWith(fontSize: 10)),
+                ),
+                for (final dia in _diasSemana.keys) celda(celdas['$dia|$f']),
+              ]),
+          ],
+        );
+        return SingleChildScrollView(scrollDirection: Axis.horizontal, child: tabla);
+      },
+    );
+  }
+
+  static String _materia(Map<String, dynamic> b) => ((b['materia'] as Map?)?['nombre'] as String?) ?? '';
 
   static String _nombre(Map<String, dynamic> p) => ((p['perfil'] as Map?)?['nombre'] as String?) ?? '';
 
