@@ -87,6 +87,19 @@ class _PanelTesoreroState extends State<PanelTesorero> {
     }
   }
 
+  /// Recordatorio privado a quien debe (R-CU39): un aviso por cuota, sólo para esas familias.
+  Future<void> _recordar(List<Map<String, dynamic>> quienDebe) async {
+    final cuotas = {for (final r in quienDebe) r['cuota_id'] as String};
+    var total = 0;
+    final ok = await intentar(context, () async {
+      for (final id in cuotas) {
+        total += (await supa.rpc('recordar_cuota', params: {'p_cuota': id}) as int);
+      }
+    });
+    if (!mounted) return;
+    if (ok) avisar(context, total == 0 ? 'Nadie tiene pendiente en esas cuotas.' : 'Recordatorio enviado a $total familia${total == 1 ? '' : 's'}.');
+  }
+
   Future<void> _anular(Map<String, dynamic> q, VoidCallback recargar) async {
     final motivo = await _pedirMotivo(context, q['concepto'] as String);
     if (motivo == null || !mounted) return;
@@ -128,8 +141,17 @@ class _PanelTesoreroState extends State<PanelTesorero> {
           if (d.porConfirmar.isEmpty)
             const Vacio('No hay comprobantes por revisar.', icono: Icons.fact_check_outlined),
           for (final p in d.porConfirmar) _tarjetaPago(p, recargar),
-          const Seccion('Quién debe'),
-          Text('Solo tú lo ves.', style: T.caption),
+          Seccion(
+            'Quién debe',
+            accion: d.quienDebe.isEmpty
+                ? null
+                : TextButton.icon(
+                    onPressed: () => _recordar(d.quienDebe),
+                    icon: const Icon(Icons.notifications_none, size: 18),
+                    label: const Text('Recordar'),
+                  ),
+          ),
+          Text('Solo tú lo ves. El recordatorio le llega solo a quien debe, dentro de la app.', style: T.caption),
           if (d.quienDebe.isEmpty)
             const Vacio('Nadie debe cuotas por ahora.', icono: Icons.check_circle_outline),
           for (final r in d.quienDebe) _tarjetaDeuda(r),
