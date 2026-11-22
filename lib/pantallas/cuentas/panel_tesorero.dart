@@ -18,7 +18,8 @@ class _Datos {
 /// Panel del tesorero (Cuentas): QR de cobro (R-CU42), cuotas del curso, crear (R-CU08) y anular (Q-CU-PAG-08).
 /// Comprobantes, «Quién debe» y gastos llegan en las partes 3.3 y 3.4.
 class PanelTesorero extends StatefulWidget {
-  const PanelTesorero({super.key});
+  const PanelTesorero({super.key, this.enPestana = true});
+  final bool enPestana; // false cuando se abre desde «Mis cuotas» (con botón de volver)
   @override
   State<PanelTesorero> createState() => _PanelTesoreroState();
 }
@@ -81,7 +82,7 @@ class _PanelTesoreroState extends State<PanelTesorero> {
       cargar: _cargar,
       construir: (context, d, recargar) => Pantalla(
         titulo: 'Cuentas',
-        atras: false,
+        atras: !widget.enPestana,
         children: [
           const Titulo('Panel del tesorero', sub: 'Tu QR de cobro y las cuotas del curso.'),
           const Seccion('Tu QR de cobro'),
