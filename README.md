@@ -14,8 +14,8 @@ https://github.com/ferfloo27/docs-cursito
 | **Code Quality** | ✓ Validado | 0 errores, 1 warning ignorable |
 | **Web Build** | ✓ Compilado | 100+ archivos, ~15-20 MB |
 | **APK Build** | ✓ Compilado | v0.1.0+1, 73.98 MB |
-| **Fases Implementadas** | ✓ Fase 2, 3, Nivel B | Testeadas en APK |
-| **Supabase Config** | ✓ Integrado | Local (127.0.0.1:56321) |
+| **Fases Implementadas** | ✓ Fase 2, 3, Nivel B | Testeadas en Supabase Cloud |
+| **Supabase Config** | ✓ Integrado | Cloud (producción) |
 | **Assets** | ✓ Incluidos | env.json empaquetado en APK |
 
 ## Estructura del Proyecto
@@ -28,53 +28,43 @@ https://github.com/ferfloo27/docs-cursito
 | `build/web/` | Web build compilado (listo para desplegar) |
 | `build/app/outputs/flutter-apk/` | APK compilado |
 | `assets/` | Archivos estáticos (incluye env.json) |
-| `supabase/migrations/` | Esquema, lógica (triggers y RPC), RLS, Storage y `pg_cron` |
+| `supabase/migrations/` | Esquema, lógica (triggers y RPC), RLS, Storage |
 | `supabase/seed.sql` | Semilla de la demo: 4.º B Primaria, U.E. San Andrés |
-| `supabase/semilla/` | Imágenes de la semilla y script para subirlas a Storage |
+| `supabase/semilla/imagenes/` | Imágenes de avatares y recursos |
 | `supabase/functions/vincular-alumno/` | Edge Function que crea la cuenta del alumno al escanear el QR |
-| `supabase/pruebas/rls_por_rol.sql` | Prueba de seguridad por rol (se corre a mano) |
-| `tool/` | Scripts de apoyo (generar las imágenes de la semilla) |
-| `env.json` | Configuración de Supabase (incluido en assets para APK) |
+| `supabase/pruebas/rls_por_rol.sql` | Prueba de seguridad por rol |
+| `tool/` | Scripts de apoyo |
 | `pubspec.yaml` | Dependencias Flutter |
 
-## Instalación y Ejecución
+## Instalación y Uso
 
 ### Requisitos
 
 - Flutter 3.13.5 o más nuevo
-- Node 20 o más nuevo (para Supabase)
-- Docker Desktop (para Supabase local)
 - Android SDK 21+ (para APK)
-- Dispositivo Android o emulador (para instalar APK)
+- Dispositivo Android 8+ o emulador
+- Supabase Cloud account (ya configurado)
 
-### Arranque Local (Desarrollo)
+### Descargar e Instalar APK
 
-1. **Inicia Supabase local:**
-```powershell
-npx supabase start -x vector,logflare,studio,imgproxy,mailpit,realtime,supavisor
-$env:SUPABASE_URL = "http://127.0.0.1:56321"
-$env:SUPABASE_SECRET_KEY = "<SERVICE_ROLE_KEY que muestra supabase start>"
-```
+1. **Descarga la última versión APK:**
+   - Ve a [Releases](../../releases)
+   - Descarga `app-release.apk` (v0.1.0+1)
 
-2. **Sube la semilla de datos:**
-```powershell
-node supabase/semilla/subir_imagenes.mjs
-```
+2. **Instala en tu dispositivo:**
+   ```powershell
+   adb install -r app-release.apk
+   ```
 
-3. **Copia env.example.json como env.json:**
-```powershell
-Copy-Item env.example.json env.json
-```
-Edita `env.json` con la URL y clave publicable que muestre Supabase local.
+   **Requisitos en el dispositivo:**
+   - Depuración USB habilitada (Configuración > Opciones de Desarrollador > Depuración USB)
+   - Cable USB conectado
 
-4. **Ejecuta la app:**
-```powershell
-flutter clean
-flutter pub get
-flutter run --dart-define-from-file=env.json
-```
+3. **Abre Cursito desde el menú de apps**
 
-### Build para Producción
+### Build Personalizado
+
+Si necesitas recompilar con credenciales distintas:
 
 #### APK Android
 ```powershell
@@ -91,17 +81,6 @@ flutter pub get
 flutter build web --dart-define-from-file=env.json
 ```
 Web build: `build/web/` - Listo para desplegar a Firebase Hosting, Netlify, Vercel, etc.
-
-### Instalación del APK en Dispositivo
-
-**Con adb (depuración USB):**
-```powershell
-adb install -r build/app/outputs/flutter-apk/app-release.apk
-```
-
-**Requisitos en el dispositivo:**
-- Depuración USB habilitada (Configuración > Opciones de Desarrollador > Depuración USB)
-- Cable USB conectado
 
 ### Despliegue Web
 
@@ -139,26 +118,6 @@ Son datos sintéticos. Todas las cuentas usan la contraseña `cursito2026`.
 - Código de profesor: `PRF-K2Q9`
 - Los alumnos acceden escaneando QR generado por el padre
 
-## Prueba de Seguridad por Rol (RLS)
-
-Verifica que las políticas de Row Level Security funcionan correctamente:
-
-```powershell
-docker cp supabase/pruebas/rls_por_rol.sql supabase_db_cursito:/tmp/rls.sql
-docker exec supabase_db_cursito psql -U postgres -q -f /tmp/rls.sql
-```
-
-Cada prueba imprime `PASS T-CUxx`. El mismo archivo se puede pegar en el editor SQL del proyecto Supabase, sin las líneas que empiezan con `\`.
-
-## Reiniciar la Demo
-
-Para volver a cargar la semilla de datos:
-
-```powershell
-npx supabase db reset
-node supabase/semilla/subir_imagenes.mjs
-```
-
 ## Fases Implementadas
 
 ### ✓ Fase 2: Gestión de Gastos de Curso
@@ -182,7 +141,7 @@ node supabase/semilla/subir_imagenes.mjs
 ## Stack Tecnológico
 
 - **Frontend:** Flutter 3.13.5
-- **Backend:** Supabase (Postgres, Auth, Storage, Edge Functions)
+- **Backend:** Supabase Cloud (Postgres, Auth, Storage, Edge Functions)
 - **Base de Datos:** PostgreSQL 15+
 - **Seguridad:** Row Level Security (RLS), Auth JWT
 - **Almacenamiento:** Supabase Storage
@@ -206,32 +165,39 @@ Ver `pubspec.yaml` para la lista completa. Principales:
 
 | Comando | Propósito | Output |
 |---------|-----------|--------|
-| `flutter run --dart-define-from-file=env.json` | Debug en dispositivo/emulador | APK debug |
 | `flutter build apk --dart-define-from-file=env.json` | Producción Android | APK release (73.98 MB) |
 | `flutter build web --dart-define-from-file=env.json` | Producción Web | HTML/JS (~15-20 MB) |
 
 ## Troubleshooting
 
 ### Falta env.json en APK
-**Solución:** Verifica que `env.json` esté en `assets/` y declarado en `pubspec.yaml` bajo `flutter.assets`.
+**Solución:** Verifica que `env.json` esté en la raíz y declarado en `pubspec.yaml` bajo `flutter.assets`.
 
 ### Supabase no conecta
-**Solución:** Verifica que Supabase local está corriendo (`npx supabase status`) y que `env.json` tiene la URL correcta (http://127.0.0.1:56321).
-
-### RLS denies access
-**Solución:** Verifica que el usuario tiene permisos en la política de RLS. Ver `supabase/pruebas/rls_por_rol.sql` para pruebas.
+**Solución:** Verifica que `env.json` tiene credenciales correctas de Supabase Cloud (URL y PUBLIC KEY).
 
 ### APK no instala
 **Solución:** Verifica que depuración USB está habilitada en el dispositivo y que el cable está conectado. Usa `adb devices` para listar.
 
+### RLS denies access
+**Solución:** Verifica que el usuario tiene permisos en la política de RLS de Supabase.
+
 ## Notas de Desarrollo
 
-- Código compilado exitosamente: 0 errores, 1 warning ignorable (función sin usar `_comprimirFoto`)
-- Web build validado: 100+ artefactos generados
-- APK testado en dispositivo: Funciona correctamente
+- Código compilado exitosamente: 0 errores, 1 warning ignorable
+- APK testado en Supabase Cloud con cuenta de padre: Funciona correctamente
 - Todas las Fases (2, 3, Nivel B) implementadas y operacionales
 - Supabase RLS configurado correctamente
 - Variables de entorno inyectadas en tiempo de compilación
+- Almacenamiento en Supabase Storage con buckets: comprobantes, facturas, qr_cobro
+
+## Despliegue en Producción
+
+1. Descargar APK desde [Releases](../../releases)
+2. Instalar en dispositivos Android 8+
+3. Configurar credenciales de Supabase Cloud en `env.json`
+4. Desplegar web a Firebase, Netlify o similar
+5. Comunicar a usuarios las credenciales de acceso
 
 ## Licencia
 
