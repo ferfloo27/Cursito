@@ -6,6 +6,7 @@ import '../../core/tema.dart';
 import '../../estado/sesion.dart';
 import '../../widgets/comunes.dart';
 import 'actividades.dart';
+import 'hilo.dart';
 
 /// Lo que se muestra en el detalle; lo que el rol no puede ver queda en null (RN-CU04: el alumno no ve cuota ni asistencia).
 class _Detalle {
@@ -21,7 +22,7 @@ class _Detalle {
 }
 
 /// 16 · Detalle de actividad: asistencia, autorización y cuota juntas (R-CU25, R-CU37, R-CU38, R-CU47).
-/// El hilo de comentarios (R-CU26) se agrega debajo.
+/// Debajo, el hilo de comentarios de la actividad (R-CU26).
 class DetalleActividad extends StatefulWidget {
   const DetalleActividad({super.key, required this.id});
   final String id;
@@ -166,6 +167,7 @@ class _DetalleActividadState extends State<DetalleActividad> {
               if (evento && d.conteo != null) ..._asistencia(d, abierta),
               if (d.a['pide_autorizacion'] == true && !_c.esAlumno) ..._autorizacion(d, abierta),
               if (d.cuota != null) ..._cuota(d),
+              HiloActividad(actividad: a),
             ]);
           },
         ),
