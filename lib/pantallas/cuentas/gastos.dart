@@ -56,6 +56,7 @@ class _RegistrarGastoState extends State<RegistrarGasto> {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 90);
     if (x == null) return;
     final ok = await intentar(context, () async { // ignore: use_build_context_synchronously
+      _factura = await _comprimirFoto(await x.readAsBytes());
     });
     if (ok && mounted) setState(() => _error = null);
   }
