@@ -10,9 +10,9 @@ import '../../estado/sesion.dart';
 import '../../widgets/comunes.dart';
 
 class _Datos {
-  _Datos(this.qrUrl, this.cuotas);
+  _Datos(this.qrUrl, this.cuotas, this.porConfirmar, this.quienDebe);
   final String? qrUrl;
-  final List<Map<String, dynamic>> cuotas;
+  final List<Map<String, dynamic>> cuotas, porConfirmar, quienDebe;
 }
 
 /// Panel del tesorero (Cuentas): QR de cobro (R-CU42), cuotas del curso, crear (R-CU08) y anular (Q-CU-PAG-08).
@@ -37,7 +37,30 @@ class _PanelTesoreroState extends State<PanelTesorero> {
         .select('id, concepto, monto_por_alumno, vence_el, anulada_en, motivo_anulacion')
         .eq('curso_id', _c.id)
         .order('creado_en', ascending: false);
-    return _Datos(url, List<Map<String, dynamic>>.from(cuotas));
+    final pagos = await supa
+        .from('pagos')
+        .select('id, monto, nro_transaccion, creado_en, comprobante_path, pagado_por, '
+            'deuda:deudas(monto, cuota:cuotas(concepto), alumno:alumnos(apellidos, nombres))')
+        .eq('curso_id', _c.id)
+        .eq('estado', 'en_revision')
+        .order('creado_en', ascending: true);
+    final porConfirmar = [for (final p in pagos as List) Map<String, dynamic>.from(p as Map)];
+    // Nombre del padre que pagó (si la base no lo deja leer, la tarjeta dice «Padre»).
+    final ids = {for (final p in porConfirmar) p['pagado_por'] as String};
+    if (ids.isNotEmpty) {
+      final perfiles = await supa.from('perfiles').select('id, nombre').inFilter('id', ids.toList());
+      final nombres = {for (final f in perfiles as List) (f as Map)['id'] as String: f['nombre'] as String};
+      for (final p in porConfirmar) {
+        p['padre'] = nombres[p['pagado_por']];
+      }
+    }
+    final debe = await supa.rpc('quien_debe', params: {'p_curso': _c.id}) as List;
+    return _Datos(
+      url,
+      List<Map<String, dynamic>>.from(cuotas),
+      porConfirmar,
+      [for (final r in debe) Map<String, dynamic>.from(r as Map)],
+    );
   }
 
   Future<void> _subirQr(VoidCallback recargar) async {
@@ -101,6 +124,15 @@ class _PanelTesoreroState extends State<PanelTesorero> {
                   icono: Icons.qr_code_2, cargando: _subiendo, onPressed: () => _subirQr(recargar)),
             ]),
           ),
+          Seccion('Por confirmar (${d.porConfirmar.length})'),
+          if (d.porConfirmar.isEmpty)
+            const Vacio('No hay comprobantes por revisar.', icono: Icons.fact_check_outlined),
+          for (final p in d.porConfirmar) _tarjetaPago(p, recargar),
+          const Seccion('Quién debe'),
+          Text('Solo tú lo ves.', style: T.caption),
+          if (d.quienDebe.isEmpty)
+            const Vacio('Nadie debe cuotas por ahora.', icono: Icons.check_circle_outline),
+          for (final r in d.quienDebe) _tarjetaDeuda(r),
           Seccion(
             'Cuotas',
             accion: TextButton.icon(
@@ -118,6 +150,60 @@ class _PanelTesoreroState extends State<PanelTesorero> {
           for (final q in d.cuotas) _tarjetaCuota(q, recargar),
         ],
       ),
+    );
+  }
+
+  Widget _tarjetaPago(Map<String, dynamic> p, VoidCallback recargar) {
+    final deuda = Map<String, dynamic>.from(p['deuda'] as Map);
+    final alumno = Map<String, dynamic>.from(deuda['alumno'] as Map);
+    final concepto = (deuda['cuota'] as Map)['concepto'] as String;
+    final cuando = DateTime.parse(p['creado_en'] as String);
+    return Tarjeta(
+      onTap: () async {
+        final revisado = await context.push<bool>('/pagos/revisar', extra: p);
+        if (revisado == true) recargar();
+      },
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${alumno['apellidos']} ${alumno['nombres']}', style: T.heading),
+            const SizedBox(height: 2),
+            Text('$concepto · ${p['padre'] ?? 'Padre'}', style: T.caption),
+            Text('${fechaCorta(cuando)} ${hora(cuando)} · Nº ${p['nro_transaccion']}', style: T.caption),
+          ]),
+        ),
+        Text(bs(aNum(p['monto'])), style: T.heading),
+        const Icon(Icons.chevron_right, color: C.inkMuted),
+      ]),
+    );
+  }
+
+  Widget _tarjetaDeuda(Map<String, dynamic> r) {
+    final pendiente = aNum(r['pendiente']);
+    final enRevision = aNum(r['en_revision']);
+    final vencida = r['vencida'] == true;
+    final parcial = r['estado'] == 'pago_parcial';
+    return Tarjeta(
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(r['alumno'] as String, style: T.heading),
+            const SizedBox(height: 2),
+            Text('${r['concepto']} · ${r['padre'] ?? 'Sin padre vinculado'}', style: T.caption),
+            if (enRevision > 0) Text('En revisión: ${bs(enRevision)}', style: T.caption),
+          ]),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(bs(pendiente), style: T.heading),
+          const SizedBox(height: 4),
+          if (vencida)
+            const Chip2('Vencida', fondo: C.rosa, tinta: C.rosaInk)
+          else if (parcial)
+            Chip2('Pago parcial', fondo: C.durazno, tinta: C.duraznoInk)
+          else
+            const Chip2('Pendiente', fondo: C.cielo, tinta: C.cieloInk),
+        ]),
+      ]),
     );
   }
 

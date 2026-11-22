@@ -9,6 +9,7 @@ import 'pantallas/comunicados/comunicados.dart';
 import 'pantallas/cuentas/crear_cuota.dart';
 import 'pantallas/cuentas/mis_cuotas.dart';
 import 'pantallas/cuentas/pagar_cuota.dart';
+import 'pantallas/cuentas/revisar_pago.dart';
 import 'pantallas/cuentas/panel_tesorero.dart';
 import 'pantallas/curso/crear_curso.dart';
 import 'pantallas/curso/miembros.dart';
@@ -53,6 +54,7 @@ final rutas = GoRouter(
     GoRoute(path: '/cuotas/pagar', builder: (_, s) => PagarCuota(cuota: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/cuotas/resultado', builder: (_, s) => ResultadoPago(datos: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/tesorero', builder: (_, _) => const PanelTesorero(enPestana: false)),
+    GoRoute(path: '/pagos/revisar', builder: (_, s) => RevisarPago(pago: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
     GoRoute(
         path: '/actividad/:id/editar',
