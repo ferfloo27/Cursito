@@ -57,7 +57,10 @@ Deno.serve(async (req) => {
   let usuarioId = alumno.usuario_alumno_id;
   if (usuarioId) {
     const { error } = await admin.auth.admin.updateUserById(usuarioId, { password });
-    if (error) return respuesta({ error: "no_se_pudo_vincular" }, 500);
+    if (error) {
+      console.error("updateUserById", error.message);
+      return respuesta({ error: "no_se_pudo_vincular" }, 500);
+    }
   } else {
     const { data, error } = await admin.auth.admin.createUser({
       email,
@@ -65,7 +68,10 @@ Deno.serve(async (req) => {
       email_confirm: true,
       user_metadata: { nombre: alumno.nombre, es_alumno: true },
     });
-    if (error || !data.user) return respuesta({ error: "no_se_pudo_vincular" }, 500);
+    if (error || !data.user) {
+      console.error("createUser", error?.message);
+      return respuesta({ error: "no_se_pudo_vincular" }, 500);
+    }
     usuarioId = data.user.id;
   }
 
@@ -74,14 +80,20 @@ Deno.serve(async (req) => {
     p_alumno: alumno.alumno_id,
     p_usuario: usuarioId,
   });
-  if (errVinc) return respuesta({ error: "no_se_pudo_vincular" }, 500);
+  if (errVinc) {
+    console.error("completar_vinculacion", errVinc.message);
+    return respuesta({ error: "no_se_pudo_vincular" }, 500);
+  }
 
   // 4. Sesión
   const publico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: sesion, error: errSesion } = await publico.auth.signInWithPassword({ email, password });
-  if (errSesion || !sesion.session) return respuesta({ error: "no_se_pudo_vincular" }, 500);
+  if (errSesion || !sesion.session) {
+    console.error("signInWithPassword", errSesion?.message);
+    return respuesta({ error: "no_se_pudo_vincular" }, 500);
+  }
 
   return respuesta({
     email,
