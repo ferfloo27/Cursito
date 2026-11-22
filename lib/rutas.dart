@@ -5,6 +5,7 @@ import 'estado/sesion.dart';
 import 'pantallas/acceso/acceso.dart';
 import 'pantallas/actividades/actividades.dart';
 import 'pantallas/actividades/detalle.dart';
+import 'pantallas/comunicados/comunicados.dart';
 import 'pantallas/curso/crear_curso.dart';
 import 'pantallas/curso/miembros.dart';
 import 'pantallas/curso/nomina.dart';
@@ -49,6 +50,11 @@ final rutas = GoRouter(
         path: '/actividad/:id/editar',
         builder: (_, s) => NuevaActividad(editar: s.extra as Map<String, dynamic>?)),
     GoRoute(path: '/a/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
+    GoRoute(path: '/comunicados/nuevo', builder: (_, _) => const NuevoComunicado()),
+    GoRoute(path: '/comunicado/:id', builder: (_, s) => DetalleComunicado(id: s.pathParameters['id']!)),
+    GoRoute(
+        path: '/comunicado/:id/lectores',
+        builder: (_, s) => QuienLeyo(id: s.pathParameters['id']!, titulo: s.extra as String?)),
     GoRoute(path: '/alumno/escanear', builder: (_, _) => const AlumnoEscanear()),
     GoRoute(path: '/alumno/pin', builder: (_, _) => const AlumnoPin()),
     StatefulShellRoute.indexedStack(
@@ -59,7 +65,7 @@ final rutas = GoRouter(
           GoRoute(path: '/actividades', builder: (_, _) => const ListaActividades())
         ]),
         StatefulShellBranch(
-            routes: [GoRoute(path: '/muro', builder: (_, _) => const Proximamente('Muro', Icons.forum_outlined))]),
+            routes: [GoRoute(path: '/muro', builder: (_, _) => const Muro())]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/cuentas', builder: (_, _) => const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
         ]),
