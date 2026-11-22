@@ -28,10 +28,12 @@ class CuentasCurso extends StatelessWidget {
   CursoMio get _c => sesion.curso!;
 
   Future<_Cuentas> _cargar() async {
+    // Cierra las votaciones vencidas antes de mostrarlas (DEC-CU07: cierre al consultar).
+    await supa.rpc('actualizar_votaciones', params: {'p_curso': _c.id});
     final r = Map<String, dynamic>.from(await supa.rpc('rendicion', params: {'p_curso': _c.id}) as Map);
     final g = await supa
         .from('gastos')
-        .select('id, concepto, categoria, monto, estado')
+        .select('id, concepto, categoria, monto, estado, vota_hasta')
         .eq('curso_id', _c.id)
         .order('creado_en', ascending: false);
     final aj = await supa
@@ -105,6 +107,33 @@ class CuentasCurso extends StatelessWidget {
                   const Icon(Icons.chevron_right, color: C.lilaStrong),
                 ]),
               ),
+            ],
+            if (d.gastos.any((g) => g['estado'] == 'en_votacion')) ...[
+              const Seccion('Votaciones abiertas'),
+              Text('Un gasto grande lo decide la mayoría de las familias. Cada familia vota una vez.',
+                  style: T.caption),
+              for (final g in d.gastos.where((g) => g['estado'] == 'en_votacion'))
+                Tarjeta(
+                  color: C.lila,
+                  onTap: () async {
+                    await context.push('/gastos/${g['id']}');
+                    recargar();
+                  },
+                  child: Row(children: [
+                    const Icon(Icons.how_to_vote_outlined, color: C.lilaStrong),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(g['concepto'] as String, style: T.heading),
+                        const SizedBox(height: 2),
+                        Text(
+                            'Vota hasta ${fechaHora(DateTime.parse(g['vota_hasta'] as String).toLocal())} · ${bs(aNum(g['monto']))}',
+                            style: T.caption),
+                      ]),
+                    ),
+                    const Icon(Icons.chevron_right, color: C.lilaStrong),
+                  ]),
+                ),
             ],
             const Seccion('Gastos'),
             if (d.gastos.isEmpty) const Vacio('Aún no hay gastos registrados.', icono: Icons.receipt_long_outlined),
