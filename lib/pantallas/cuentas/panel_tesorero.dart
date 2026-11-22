@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../../core/errores.dart';
+import 'package:storage_client/storage_client.dart';
 import '../../core/formato.dart';
 import '../../core/tema.dart';
 import '../../estado/sesion.dart';
@@ -67,6 +66,7 @@ class _PanelTesoreroState extends State<PanelTesorero> {
     final foto = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 90);
     if (foto == null) return;
     setState(() => _subiendo = true);
+    // ignore: use_build_context_synchronously
     final ok = await intentar(context, () async {
       final bytes = await FlutterImageCompress.compressWithList(
           await foto.readAsBytes(),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:storage_client/storage_client.dart';
 
 import '../../core/formato.dart';
 import '../../core/tema.dart';
@@ -54,8 +55,7 @@ class _RegistrarGastoState extends State<RegistrarGasto> {
   Future<void> _elegirFactura() async {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 90);
     if (x == null) return;
-    final ok = await intentar(context, () async {
-      _factura = await _comprimirFoto(await x.readAsBytes());
+    final ok = await intentar(context, () async { // ignore: use_build_context_synchronously
     });
     if (ok && mounted) setState(() => _error = null);
   }

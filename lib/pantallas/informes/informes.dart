@@ -156,7 +156,7 @@ class _RedactarInformeState extends State<RedactarInforme> {
         await supa.from('informes_alumno').update({
           ...datos,
           if (enviar) 'enviado_en': ahora,
-        }).eq('id', _existente!['id']);
+        }).eq('id', _existente['id']);
       }
     });
     if (!mounted) return;

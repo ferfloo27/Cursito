@@ -21,6 +21,7 @@ dependencies:
   mobile_scanner: ^7.5.0
   qr_flutter: ^4.1.0
   share_plus: ^13.3.1
+  storage_client: ^2.8.1
   supabase_flutter: ^2.18.3
   url_launcher: ^6.3.3
 

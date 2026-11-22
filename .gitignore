@@ -52,3 +52,7 @@ env.json
 supabase/.temp/
 supabase/.branches/
 supabase/.env
+
+# Archivos de logs y reportes temporales
+/!logfile!
+/!reportfile!
