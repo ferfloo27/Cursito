@@ -6,6 +6,8 @@ import 'pantallas/acceso/acceso.dart';
 import 'pantallas/actividades/actividades.dart';
 import 'pantallas/actividades/detalle.dart';
 import 'pantallas/comunicados/comunicados.dart';
+import 'pantallas/cuentas/crear_cuota.dart';
+import 'pantallas/cuentas/panel_tesorero.dart';
 import 'pantallas/curso/crear_curso.dart';
 import 'pantallas/curso/miembros.dart';
 import 'pantallas/curso/nomina.dart';
@@ -45,6 +47,7 @@ final rutas = GoRouter(
     GoRoute(path: '/unirme/profesor', builder: (_, _) => const UnirmeProfesor()),
     GoRoute(path: '/mis-hijos', builder: (_, _) => const MisHijos()),
     GoRoute(path: '/actividades/nueva', builder: (_, _) => const NuevaActividad()),
+    GoRoute(path: '/cuotas/nueva', builder: (_, _) => const CrearCuota()),
     GoRoute(path: '/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
     GoRoute(
         path: '/actividad/:id/editar',
@@ -67,7 +70,11 @@ final rutas = GoRouter(
         StatefulShellBranch(
             routes: [GoRoute(path: '/muro', builder: (_, _) => const Muro())]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/cuentas', builder: (_, _) => const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
+          GoRoute(
+              path: '/cuentas',
+              builder: (_, _) => sesion.curso?.esTesorero == true
+                  ? const PanelTesorero()
+                  : const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
         ]),
         StatefulShellBranch(routes: [GoRoute(path: '/mas', builder: (_, _) => const Mas())]),
       ],
