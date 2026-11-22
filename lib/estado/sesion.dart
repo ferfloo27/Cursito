@@ -136,6 +136,27 @@ class Sesion extends ChangeNotifier {
     return true;
   }
 
+  /// Cerrar sesión (Q-CU-ACC-06): en el teléfono del alumno también borra sus credenciales y el PIN,
+  /// así que para volver a entrar necesita un QR nuevo de su mamá o papá.
+  Future<void> cerrarSesion() async {
+    try {
+      await supa.auth.signOut();
+    } catch (_) {
+      // sin conexión: igual se olvida la sesión local
+    }
+    try {
+      await _almacen.delete(key: _kEmail);
+      await _almacen.delete(key: _kClave);
+      await _almacen.delete(key: _kPin);
+    } catch (_) {}
+    tieneAlumnoGuardado = false;
+    pinPendiente = false;
+    alumnoBloqueado = false;
+    cursos = [];
+    _cursoId = null;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _sub?.cancel();

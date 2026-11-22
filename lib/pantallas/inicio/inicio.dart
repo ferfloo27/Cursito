@@ -216,6 +216,8 @@ class InicioAlumno extends StatelessWidget {
                   Expanded(child: Text('${(b['materia'] as Map?)?['nombre']}', style: T.body)),
                 ]),
               ),
+            const SizedBox(height: 24),
+            const BotonCerrarSesion(alumno: true),
           ]),
         ),
       ),
@@ -259,7 +261,32 @@ class Mas extends StatelessWidget {
                   title: Text('Cambiar de curso o sumar otro'),
                   trailing: Icon(Icons.chevron_right)),
             ),
+            const SizedBox(height: 8),
+            const BotonCerrarSesion(),
           ]);
         },
+      );
+}
+
+/// Cerrar sesión (Q-CU-ACC-06): para cambiar de cuenta en el mismo teléfono durante la demo.
+class BotonCerrarSesion extends StatelessWidget {
+  const BotonCerrarSesion({super.key, this.alumno = false});
+  final bool alumno;
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+        onPressed: () async {
+          final ok = await confirmar(
+            context,
+            'Cerrar sesión',
+            alumno
+                ? 'Para volver a entrar en este celular necesitarás un QR nuevo de tu mamá o papá.'
+                : '¿Salir de tu cuenta en este celular?',
+            si: 'Cerrar sesión',
+          );
+          if (ok) await sesion.cerrarSesion();
+        },
+        style: TextButton.styleFrom(foregroundColor: C.rosaInk),
+        icon: const Icon(Icons.logout),
+        label: const Text('Cerrar sesión'),
       );
 }
