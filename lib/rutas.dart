@@ -7,7 +7,10 @@ import 'pantallas/actividades/actividades.dart';
 import 'pantallas/actividades/detalle.dart';
 import 'pantallas/comunicados/comunicados.dart';
 import 'pantallas/cuentas/crear_cuota.dart';
+import 'pantallas/cuentas/cuentas_curso.dart';
+import 'pantallas/cuentas/gastos.dart';
 import 'pantallas/cuentas/mis_cuotas.dart';
+import 'pantallas/cuentas/nuevo_ajuste.dart';
 import 'pantallas/cuentas/pagar_cuota.dart';
 import 'pantallas/cuentas/revisar_pago.dart';
 import 'pantallas/cuentas/panel_tesorero.dart';
@@ -55,6 +58,12 @@ final rutas = GoRouter(
     GoRoute(path: '/cuotas/resultado', builder: (_, s) => ResultadoPago(datos: s.extra as Map<String, dynamic>)),
     GoRoute(path: '/tesorero', builder: (_, _) => const PanelTesorero(enPestana: false)),
     GoRoute(path: '/pagos/revisar', builder: (_, s) => RevisarPago(pago: s.extra as Map<String, dynamic>)),
+    GoRoute(path: '/cuentas/curso', builder: (_, _) => const CuentasCurso(enPestana: false)),
+    GoRoute(path: '/gastos/nuevo', builder: (_, _) => const RegistrarGasto()),
+    GoRoute(path: '/gastos/:id', builder: (_, s) => DetalleGasto(id: s.pathParameters['id']!)),
+    GoRoute(
+        path: '/ajustes/nuevo',
+        builder: (_, s) => NuevoAjuste(gastoId: (s.extra as Map?)?['gasto_id'] as String?)),
     GoRoute(path: '/actividad/:id', builder: (_, s) => DetalleActividad(id: s.pathParameters['id']!)),
     GoRoute(
         path: '/actividad/:id/editar',
@@ -79,11 +88,13 @@ final rutas = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
               path: '/cuentas',
-              builder: (_, _) => sesion.curso?.esPadre == true
-                  ? const MisCuotas()
-                  : sesion.curso?.esTesorero == true
-                      ? const PanelTesorero()
-                      : const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
+              builder: (_, _) => sesion.curso?.esAsesor == true
+                  ? const CuentasCurso()
+                  : sesion.curso?.esPadre == true
+                      ? const MisCuotas()
+                      : sesion.curso?.esTesorero == true
+                          ? const PanelTesorero()
+                          : const Proximamente('Cuentas', Icons.account_balance_wallet_outlined))
         ]),
         StatefulShellBranch(routes: [GoRoute(path: '/mas', builder: (_, _) => const Mas())]),
       ],

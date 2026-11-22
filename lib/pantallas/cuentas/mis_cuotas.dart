@@ -33,6 +33,18 @@ class MisCuotas extends StatelessWidget {
           children: [
             Titulo(_c.hijo == null ? 'Mis cuotas' : 'Cuotas de ${_c.hijoNombre}',
                 sub: 'Solo tú y el tesorero ven tu estado de pago.'),
+            Tarjeta(
+              onTap: () async {
+                await context.push('/cuentas/curso');
+                recargar();
+              },
+              child: Row(children: [
+                const Icon(Icons.receipt_long_outlined, color: C.lilaStrong),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Cuentas del curso', style: T.heading)),
+                const Icon(Icons.chevron_right, color: C.lilaStrong),
+              ]),
+            ),
             if (_c.esTesorero)
               Tarjeta(
                 color: C.lila,
