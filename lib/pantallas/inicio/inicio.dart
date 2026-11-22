@@ -255,7 +255,8 @@ class Mas extends StatelessWidget {
               item(Icons.description_outlined, 'Mi informe', '/mi-informe', sub: 'La libreta de ${c.hijoNombre}'),
             if (c.esDocente) item(Icons.description_outlined, 'Informes', '/informes', sub: 'Redactar la libreta de cada alumno'),
             item(Icons.calendar_month_outlined, 'Calendario', '/calendario', sub: 'Tareas y eventos del mes'),
-            item(Icons.schedule_outlined, 'Horario', '/horario', sub: 'Materias por día y profesores'),
+            item(Icons.schedule_outlined, 'Horario', '/horario', sub: 'Materias por día y hora'),
+            item(Icons.co_present_outlined, 'Profesores', '/profesores', sub: 'Materia, horario y contacto'),
             if (c.gestiona) ...[
               item(Icons.groups_outlined, 'Nómina del curso', '/nomina', sub: 'Cargar, corregir y quitar alumnos'),
               item(Icons.manage_accounts_outlined, 'Miembros y roles', '/miembros', sub: 'Tesorero, docentes y códigos'),

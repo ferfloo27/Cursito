@@ -111,68 +111,38 @@ class _CalendarioCursoState extends State<CalendarioCurso> {
   }
 }
 
-/// Horario semanal y profesores (R-CU29, R-CU28). Lo ven padres, alumno y docentes.
+/// Horario semanal (R-CU29). Lo ven padres, alumno y docentes. Los profesores tienen su propio apartado.
 class HorarioCurso extends StatelessWidget {
   const HorarioCurso({super.key, this.enPestana = true});
   final bool enPestana;
 
   CursoMio get _c => sesion.curso!;
 
-  Future<({List<Map<String, dynamic>> bloques, List<Map<String, dynamic>> profesores})> _cargar() async {
+  Future<List<Map<String, dynamic>>> _cargar() async {
     final b = await supa
         .from('horario_bloques')
         .select('dia, hora_inicio, hora_fin, materia:materias(nombre)')
         .eq('curso_id', _c.id)
         .order('dia')
         .order('hora_inicio');
-    final p = await supa
-        .from('miembros_curso')
-        .select('id, rol, perfil:perfiles(nombre), profesor:profesores_curso(materia:materias(nombre))')
-        .eq('curso_id', _c.id)
-        .inFilter('rol', ['profesor', 'asesor']);
-    return (
-      bloques: [for (final x in b as List) Map<String, dynamic>.from(x as Map)],
-      profesores: [for (final x in p as List) Map<String, dynamic>.from(x as Map)],
-    );
+    return [for (final x in b as List) Map<String, dynamic>.from(x as Map)];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Cargador<({List<Map<String, dynamic>> bloques, List<Map<String, dynamic>> profesores})>(
+    return Cargador<List<Map<String, dynamic>>>(
       cargar: _cargar,
-      construir: (context, d, _) {
-        final profes = [...d.profesores]..sort((a, b) => _nombre(a).compareTo(_nombre(b)));
-        return Pantalla(
-          titulo: 'Horario',
-          atras: !enPestana,
-          children: [
-            Titulo('Horario de ${_c.nombre}', sub: 'Materias por día y hora.'),
-            if (d.bloques.isEmpty)
-              const Vacio('Todavía no se cargó el horario.', icono: Icons.schedule_outlined)
-            else
-              _cuadricula(d.bloques),
-            // El alumno no puede leer la lista de miembros (RLS): en su caso esta sección queda vacía.
-            if (profes.isNotEmpty) const Seccion('Profesores'),
-            for (final p in profes)
-              Tarjeta(
-                padding: 12,
-                child: Row(children: [
-                  CircleAvatar(
-                    backgroundColor: C.lila,
-                    child: Text(_nombre(p).isEmpty ? '?' : _nombre(p).characters.first, style: T.heading),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(_nombre(p), style: T.heading),
-                      Text(_materiaDe(p), style: T.caption),
-                    ]),
-                  ),
-                ]),
-              ),
-          ],
-        );
-      },
+      construir: (context, bloques, _) => Pantalla(
+        titulo: 'Horario',
+        atras: !enPestana,
+        children: [
+          Titulo('Horario de ${_c.nombre}', sub: 'Materias por día y hora.'),
+          if (bloques.isEmpty)
+            const Vacio('Todavía no se cargó el horario.', icono: Icons.schedule_outlined)
+          else
+            _cuadricula(bloques),
+        ],
+      ),
     );
   }
 
@@ -249,15 +219,6 @@ class HorarioCurso extends StatelessWidget {
   }
 
   static String _materia(Map<String, dynamic> b) => ((b['materia'] as Map?)?['nombre'] as String?) ?? '';
-
-  static String _nombre(Map<String, dynamic> p) => ((p['perfil'] as Map?)?['nombre'] as String?) ?? '';
-
-  static String _materiaDe(Map<String, dynamic> p) {
-    final prof = p['profesor'] as Map?;
-    final materia = (prof?['materia'] as Map?)?['nombre'] as String?;
-    if (p['rol'] == 'asesor') return materia == null ? 'Asesora del curso' : 'Asesora · $materia';
-    return materia ?? 'Profesor';
-  }
 
   static String _hora(dynamic t) => (t as String).substring(0, 5);
 }
